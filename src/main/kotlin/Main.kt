@@ -29,7 +29,7 @@ fun distributeBottles(bottles: Int, currentGrids: Set<Grid>): Set<Grid> = when {
 fun distributeFour(currentGrids: Set<Grid>) = currentGrids.flatMap { distributeFour(it) }.toSet()
 @Suppress("UnnecessaryVariable")
 fun distributeFour(grid: Grid): Set<Grid> =
-    (0 until grid.dimensions().first).flatMap { bottle1Row ->
+    (0 until grid.rows()).flatMap { bottle1Row ->
         grid.openCols(bottle1Row).flatMap { bottle1Col ->
             val bottle2Row = bottle1Row
             grid.openCols(bottle2Row, *zeroThrough(bottle1Col)).flatMap { bottle2Col ->
@@ -48,8 +48,34 @@ fun distributeFour(grid: Grid): Set<Grid> =
         }
     }.toSet()
 fun distributeSix(currentGrids: Set<Grid>) = currentGrids.flatMap { distributeSix(it) }.toSet()
+@Suppress("UnnecessaryVariable")
 fun distributeSix(grid: Grid): Set<Grid> =
-    TODO()
+    (0 until grid.rows()).flatMap { bottle1Row ->
+        grid.openCols(bottle1Row).flatMap { bottle1Col ->
+            val bottle2Row = bottle1Row
+            grid.openCols(bottle2Row, *zeroThrough(bottle1Col)).flatMap { bottle2Col ->
+                val bottle3Col = bottle2Col
+                grid.openRows(bottle3Col, *zeroThrough(bottle2Row)).flatMap { bottle3Row ->
+                    val bottle4Row = bottle3Row
+                    grid.openCols(bottle4Row, bottle3Col, bottle1Col).flatMap { bottle4Col ->
+                        val bottle5Col = bottle4Col
+                        grid.openRows(bottle5Col, bottle4Row, bottle2Row).mapNotNull { bottle5Row ->
+                            val bottle6Row = bottle5Row
+                            val bottle6Col = bottle1Col
+                            if (grid.hasBottle(bottle6Row, bottle6Col)) null
+                            else grid
+                                .withBottle(bottle1Row, bottle1Col)
+                                .withBottle(bottle2Row, bottle2Col)
+                                .withBottle(bottle3Row, bottle3Col)
+                                .withBottle(bottle4Row, bottle4Col)
+                                .withBottle(bottle5Row, bottle5Col)
+                                .withBottle(bottle6Row, bottle6Col)
+                        }
+                    }
+                }
+            }
+        }
+    }.toSet()
 
 fun zeroThrough(max: Int) = (0 .. max).toList().toIntArray()
 typealias Grid = Array<BooleanArray>
@@ -62,10 +88,12 @@ fun Grid.withBottle(row: Int, col: Int) = when {
 }
 fun Grid.hasBottle(row: Int, col: Int) = this[row][col]
 fun Grid.copy() = Array(size) { get(it).clone() }
-fun Grid.dimensions() = let { Pair(it.size, it[0].size) }
+fun Grid.rows() = size
+fun Grid.cols() = get(0).size
 
 fun Grid.openRows(col: Int, vararg forbiddenRow: Int): Iterable<Int> = openIndices(getColumn(col), *forbiddenRow)
 fun Grid.openCols(row: Int, vararg forbiddenCol: Int): Iterable<Int> = openIndices(get(row).toList(), *forbiddenCol)
 fun openIndices(booleanArray: Iterable<Boolean>, vararg forbiddenIndex: Int) =
     booleanArray.withIndex().filter { !forbiddenIndex.contains(it.index) && !it.value }.map { it.index }
 fun Grid.getColumn(i: Int) = map { it[i] }
+fun Grid.matches(o: Grid) = (0 until rows()).all { get(it).contentEquals(o[it]) }
