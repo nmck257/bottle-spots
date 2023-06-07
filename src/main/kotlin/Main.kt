@@ -1,13 +1,8 @@
-import java.lang.IllegalStateException
-
 fun main(args: Array<String>) {
     val (gridRows, gridCols, bottles) = args.map(String::toInt)
         .map { it.also { if (it % 2 == 1 || it < 4) throw IllegalArgumentException("All args must be even and >4")} }
     println("Filling a $gridRows*$gridCols grid with $bottles bottles, such that each row and column has an even number of bottles...")
-    distributeBottles(gridRows, gridCols, bottles)
-        .let(::describe)
-}
-fun describe(gridSet: Collection<Grid>) {
+    val gridSet = distributeBottles(gridRows, gridCols, bottles)
     println("There are ${gridSet.size} solutions!")
     println("Here are a few:")
     println((1..3)
@@ -78,22 +73,30 @@ fun distributeSix(grid: Grid): Set<Grid> =
     }.toSet()
 
 fun zeroThrough(max: Int) = (0 .. max).toList().toIntArray()
-typealias Grid = Array<BooleanArray>
-fun Grid(gridRows: Int, gridCols: Int): Grid = Array(gridRows) { BooleanArray(gridCols) }
+class Grid(private val array: Array<BooleanArray>): Iterable<BooleanArray> by array.asIterable() {
+    constructor(gridRows: Int, gridCols: Int): this(Array(gridRows) { BooleanArray(gridCols) } )
+    operator fun get(i: Int) = array[i]
+    fun rows() = array.size
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+        other as Grid
+        if (!array.contentDeepEquals(other.array)) return false
+        return true
+    }
+    override fun hashCode() = array.contentDeepHashCode()
+}
 fun Grid.print() = joinToString("\n") { row -> row.joinToString("") { col -> if (col) "1" else "0" } }
-fun Grid.negate(): Grid = map { row -> row.map { !it }.toBooleanArray() }.toTypedArray()
+fun Grid.negate() = Grid(map { row -> row.map { !it }.toBooleanArray() }.toTypedArray())
 fun Grid.withBottle(row: Int, col: Int) = when {
     hasBottle(row, col) -> throw IllegalStateException("Cannot add bottle at ($row, $col):\n${print()}")
     else -> copy().let { it[row][col] = true; it }
 }
 fun Grid.hasBottle(row: Int, col: Int) = this[row][col]
-fun Grid.copy() = Array(size) { get(it).clone() }
-fun Grid.rows() = size
-fun Grid.cols() = get(0).size
+fun Grid.copy() = Grid(Array(rows()) { get(it).clone() })
 
 fun Grid.openRows(col: Int, vararg forbiddenRow: Int): Iterable<Int> = openIndices(getColumn(col), *forbiddenRow)
 fun Grid.openCols(row: Int, vararg forbiddenCol: Int): Iterable<Int> = openIndices(get(row).toList(), *forbiddenCol)
 fun openIndices(booleanArray: Iterable<Boolean>, vararg forbiddenIndex: Int) =
     booleanArray.withIndex().filter { !forbiddenIndex.contains(it.index) && !it.value }.map { it.index }
 fun Grid.getColumn(i: Int) = map { it[i] }
-fun Grid.matches(o: Grid) = (0 until rows()).all { get(it).contentEquals(o[it]) }

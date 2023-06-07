@@ -1,11 +1,12 @@
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.DynamicTest
-import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestFactory
 
 class MainKtTest {
     @TestFactory
     fun `expected totals`() = listOf(
+        listOf(4, 4, 4, 36),
+        listOf(4, 4, 12, 36),
         listOf(4, 6, 4, 90),
         listOf(4, 6, 20, 90),
         listOf(4, 6, 18, 480),
@@ -40,4 +41,5 @@ class MainKtTest {
             }
         }
     }
+    private fun Grid.matches(o: Grid) = (0 until rows()).all { get(it).contentEquals(o[it]) }
 }
