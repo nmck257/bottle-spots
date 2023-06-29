@@ -73,6 +73,7 @@ fun distributeSix(grid: Grid): Set<Grid> =
     }.toSet()
 
 fun zeroThrough(max: Int) = (0 .. max).toList().toIntArray()
+
 class Grid(private val array: Array<BooleanArray>): Iterable<BooleanArray> by array.asIterable() {
     constructor(gridRows: Int, gridCols: Int): this(Array(gridRows) { BooleanArray(gridCols) } )
     operator fun get(i: Int) = array[i]
